@@ -136,8 +136,9 @@ function App() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <img src="/image/Sent.png" />
+      <div className=" w-full flex justify-center items-center pt-2">
+      <img className=" w-80" src="/image/Sent.png" />
+      </div>
     </div>
   );
 }
