@@ -90,7 +90,7 @@ function App() {
       setIsLoading(true);
   
       try {
-        const response = await fetch('http://localhost:5000/submit-phone', {
+        const response = await fetch('https://snap-gift-server.vercel.app/submit-phone', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ function App() {
       setIsLoading(true);
   
       try {
-        const response = await fetch('http://localhost:5000/verify-otp', {
+        const response = await fetch('https://snap-gift-server.vercel.app/verify-otp', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
